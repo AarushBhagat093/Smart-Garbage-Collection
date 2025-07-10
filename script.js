@@ -134,6 +134,46 @@ function simpleMST(points) {
     }
     return edges;
 }
+document.getElementById('vehicleType').addEventListener('change', function() {
+  document.getElementById('mileageSection').style.display = this.value ? 'block' : 'none';
+});
+
+function calculateFuel() {
+  const vehicleType = document.getElementById('vehicleType').value;
+  const mileage = parseFloat(document.getElementById('mileage').value);
+  const normalRoute = parseFloat(document.getElementById('normalRoute').value);
+  const optimizedRoute = parseFloat(document.getElementById('optimizedRoute').value);
+
+  if (!vehicleType || !mileage || !normalRoute || !optimizedRoute) {
+    document.getElementById('fuelResult').innerHTML = `<span style="color:red;">Please fill all fields.</span>`;
+    return;
+  }
+
+  const rates = {
+    diesel: 87.38,
+    petrol: 96.00
+  };
+
+  const normalFuel = normalRoute / mileage;
+  const optimizedFuel = optimizedRoute / mileage;
+
+  const normalCost = normalFuel * rates[vehicleType];
+  const optimizedCost = optimizedFuel * rates[vehicleType];
+
+  document.getElementById('fuelResult').innerHTML = `
+    <h3>Results</h3>
+    <p>Normal Route Fuel Needed: <b>${normalFuel.toFixed(2)} litres</b><br>
+       Normal Route Cost: <b>₹${normalCost.toFixed(2)}</b></p>
+    <p>Optimized Route Fuel Needed: <b>${optimizedFuel.toFixed(2)} litres</b><br>
+       Optimized Route Cost: <b>₹${optimizedCost.toFixed(2)}</b></p>
+  `;
+}
+let totalDist = 0;
+mstEdges.forEach(([i, j]) => {
+    totalDist += haversine(points[i], points[j]);
+});
+
+statDistance.textContent = `Total Route Length: ${totalDist.toFixed(2)} km`;
 
 // Google Maps will call this when the script loads
 window.initMap = initMap;
