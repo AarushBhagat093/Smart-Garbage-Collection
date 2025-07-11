@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+// Only run if not already on welcome page:
+if (!sessionStorage.getItem('welcome_shown')) {
+    window.location.href = "welcome.html";
+}
+</script>
     <meta charset="UTF-8">
     <title>Smart Waste Collection Routing · MST Optimization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
