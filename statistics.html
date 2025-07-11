@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+// Only run if not already on welcome page:
+if (!sessionStorage.getItem('welcome_shown')) {
+    window.location.href = "welcome.html";
+}
+</script>
+    <meta charset="UTF-8">
+    <title>Statistics · SGB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body, h1, h2, h3, h4, h5, h6 {font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;}
+        .glass {background: rgba(255,255,255,0.86); box-shadow: 0 10px 36px 0 rgba(31,38,135,0.14); border-radius: 1.25rem; border: 1.5px solid rgba(32,103,255,0.10); backdrop-filter: blur(8px);}
+        .sidebar {background: linear-gradient(135deg,#1e293b 60%,#0891b2 100%); color: #f9fafb; min-width: 250px; max-width: 260px;}
+        .sidebar .icon {stroke: #bae6fd;}
+        .sidebar-link {display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.3rem; margin: 0.15rem 0; border-radius: 0.75rem; cursor: pointer; transition: background 0.15s, color 0.18s;}
+        .sidebar-link:hover, .sidebar-link.active {background: rgba(59,130,246,0.18); color: #38bdf8;}
+        .stat-card {transition: box-shadow 0.2s;}
+        .stat-card:hover {box-shadow: 0 8px 24px rgba(16,185,129,0.18);}
+        .animate-fadein { animation: fadein 0.85s cubic-bezier(0.4,0,0.2,1);}
+        @keyframes fadein { 0% { opacity: 0; transform: translateY(30px);} 100% { opacity: 1; transform: none;}}
+        :root {
+  --main-bg: #f1f5f9;
+  --sidebar-bg: linear-gradient(135deg,#1e293b 60%,#0891b2 100%);
+  --glass-bg: rgba(255,255,255,0.86);
+  --text-main: #0e7490;
+  --header-bg: linear-gradient(to right, #1e293b, #0891b2);
+}
+
+body.dark {
+  --main-bg: #181c23;
+  --sidebar-bg: linear-gradient(135deg,#0f172a 80%,#0369a1 100%);
+  --glass-bg: rgba(30,41,59,0.92);
+  --text-main: #bae6fd;
+  --header-bg: linear-gradient(to right, #0f172a, #0369a1);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--main-bg);
+}
+.sidebar {
+  background: var(--sidebar-bg);
+}
+header, footer {
+  background: var(--header-bg);
+}
+
+.glass {
+  background: var(--glass-bg) !important;
+  color: var(--text-main);
+}
+h1, h2, h3, h4, h5, h6, label, .setting-label, .sidebar-link {
+  color: var(--text-main) !important;
+}
+.sidebar-link.active, .sidebar-link:hover {
+  color: #38bdf8 !important;
+}
+.sidebar, .sidebar-link {
+  color: var(--text-main) !important;
+}
+input, select, textarea {
+  background: #fff;
+  color: #0e7490;
+}
+body.dark input, body.dark select, body.dark textarea {
+  background: #222c37;
+  color: #bae6fd;
+  border-color: #2563eb;
+}
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-cyan-100 to-sky-100 min-h-screen flex">
+    <aside class="sidebar flex flex-col py-7 px-3 space-y-6">
+        <div class="text-3xl font-extrabold text-cyan-200 tracking-wide mb-4">SGB</div>
+        <nav class="flex-1 flex flex-col gap-2">
+            <a href="index.html" class="sidebar-link"><i data-feather="map" class="icon"></i> Map & Routing</a>
+            <a href="statistics.html" class="sidebar-link active"><i data-feather="bar-chart-2" class="icon"></i> Statistics</a>
+            <a href="fuel.html" class="sidebar-link"><i data-feather="droplet" class="icon"></i> Fuel Calculator</a>
+            <a href="settings.html" class="sidebar-link"><i data-feather="settings" class="icon"></i> Settings</a>
+        </nav>
+        <div class="mt-auto flex flex-col gap-2 text-xs text-slate-300">
+            <span>Smart Waste Routing</span>
+            <span>© 2025 MST Optimization</span>
+        </div>
+    </aside>
+    <div class="flex-1 flex flex-col">
+        <header class="bg-gradient-to-r from-slate-900 to-cyan-800 text-white py-7 px-6 shadow-xl">
+            <h1 class="text-4xl font-extrabold text-center tracking-tight mb-2">Statistics</h1>
+            <p class="text-center text-lg font-medium italic text-cyan-200">Visualize your smart waste routing data.</p>
+        </header>
+        <main class="flex-1 container mx-auto px-3 sm:px-8 py-8 flex flex-col gap-8 animate-fadein">
+            <!-- Live Statistics -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div class="glass p-6 flex flex-col items-center stat-card">
+                    <div class="text-3xl text-cyan-700 mb-2"><i data-feather="map-pin"></i></div>
+                    <div class="text-lg text-slate-600 mb-1">Collection Points</div>
+                    <div id="stat-points" class="font-mono text-3xl text-cyan-900">0</div>
+                </div>
+                <div class="glass p-6 flex flex-col items-center stat-card">
+                    <div class="text-3xl text-cyan-700 mb-2"><i data-feather="trending-up"></i></div>
+                    <div class="text-lg text-slate-600 mb-1">Total Route Length (km)</div>
+                    <div id="stat-distance" class="font-mono text-3xl text-cyan-900">0</div>
+                </div>
+            </section>
+            <!-- Route Length Over Time Chart -->
+            <section class="glass p-7 shadow-lg">
+                <h2 class="text-2xl text-cyan-900 font-semibold mb-4 italic">Route Length Over Time</h2>
+                <canvas id="routeChart" height="100"></canvas>
+                <div class="text-xs mt-4 text-slate-500">
+                    * This chart shows how your optimized route length has changed over time. Each optimization you perform on the main page will be tracked here.
+                </div>
+            </section>
+        </main>
+        <footer class="bg-gradient-to-r from-slate-900 to-cyan-800 text-white py-4 text-center shadow-xl">
+            <span class="font-semibold tracking-wider text-lg" style="font-style:italic;">Smart Waste Collection</span>
+            <span class="mx-2">·</span>
+            <span class="text-sm italic">MST Optimization Demo · <span class="text-cyan-200">2025</span></span>
+        </footer>
+    </div>
+    <script>
+        feather.replace();
+
+        // Display latest stats from sessionStorage
+        function updateStatDisplay() {
+            const points = sessionStorage.getItem('sgb_points') || '0';
+            const length = sessionStorage.getItem('sgb_length') || '0';
+            document.getElementById('stat-points').innerText = points;
+            document.getElementById('stat-distance').innerText = length;
+        }
+        updateStatDisplay();
+
+        // --- Chart.js logic for Route Length Over Time ---
+
+        // Get the route history from localStorage (not sessionStorage so it persists longer)
+        let routeHistory = [];
+        try {
+            routeHistory = JSON.parse(localStorage.getItem('sgb_route_history') || "[]");
+        } catch(e) {
+            routeHistory = [];
+        }
+
+        // If there is no data, show a dummy chart
+        if(routeHistory.length === 0) {
+            routeHistory = [
+                { date: new Date(Date.now() - 4*86400000).toLocaleDateString(), length: 5 },
+                { date: new Date(Date.now() - 3*86400000).toLocaleDateString(), length: 7 },
+                { date: new Date(Date.now() - 2*86400000).toLocaleDateString(), length: 6 },
+                { date: new Date(Date.now() - 1*86400000).toLocaleDateString(), length: 8 },
+                { date: new Date().toLocaleDateString(), length: 10 },
+            ];
+        }
+
+        // Prepare data for chart
+        const labels = routeHistory.map(e => e.date);
+        const data = routeHistory.map(e => e.length);
+
+        // Draw chart
+        new Chart(document.getElementById('routeChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Route Length (km)',
+                    data: data,
+                    fill: true,
+                    borderColor: "#0891b2",
+                    backgroundColor: "rgba(14,116,144,0.15)",
+                    tension: 0.25,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: "#2563eb",
+                    pointBorderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: "#0e7490", font: { size: 14, weight: "bold" } }
+                    },
+                    x: {
+                        ticks: { color: "#0e7490", font: { size: 13 } }
+                    }
+                }
+            }
+        });
+        // Theme switching logic for all pages (no themeSelect on non-settings pages)
+function applyTheme(theme) {
+    if (theme === "dark") {
+        document.body.classList.add("dark");
+    } else if (theme === "light") {
+        document.body.classList.remove("dark");
+    } else {
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.body.classList.add("dark");
+        } else {
+            document.body.classList.remove("dark");
+        }
+    }
+}
+window.addEventListener('DOMContentLoaded', function() {
+    const theme = localStorage.getItem('sgb_theme') || 'auto';
+    applyTheme(theme);
+});
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", e => {
+    if ((localStorage.getItem('sgb_theme') || 'auto') === 'auto') {
+        applyTheme('auto');
+    }
+});
+    </script>
+</body>
+</html>
